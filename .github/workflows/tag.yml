@@ -15,4 +15,4 @@ jobs:
     steps:
     - name: Tag
       id: tag
-      uses: bmon/merge-tag-action
+      uses: bmon/merge-tag-action@v1
