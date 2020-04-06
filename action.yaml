@@ -1,0 +1,5 @@
+name: 'Merge Tag'
+description: 'Tag commits on master as they are merged'
+runs:
+  using: 'node12'
+  main: 'index.js'

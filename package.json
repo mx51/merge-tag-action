@@ -1,0 +1,11 @@
+{
+  "name": "merge-tag-action",
+  "version": "0.0.1",
+  "description": "Automatically tags master when merging a PR",
+  "main": "index.js",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.1.0",
+    "@actions/github": "^1.1.0"
+  }
+}
