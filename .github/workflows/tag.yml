@@ -1,20 +1,17 @@
 # This is a basic workflow to help you get started with Actions
-
-name: Tag
-
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   pull_request:
-    types: [ open, synchronised, reopened, closed ]
+    types: [ opened, synchronize, reopened, closed, edited ]
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   tag:
     runs-on: ubuntu-latest
-    name: Tag
+    name: tag
     steps:
-    - name: Tag
-      id: tag
-      uses: bmon/merge-tag-action
+    - uses: bmon/merge-tag-action@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+
