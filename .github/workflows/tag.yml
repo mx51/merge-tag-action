@@ -8,9 +8,9 @@ on:
 jobs:
   tag:
     runs-on: ubuntu-latest
-    name: Tag
+    name: tag
     steps:
-      uses: bmon/merge-tag-action@v1
+    - uses: bmon/merge-tag-action@v1
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
