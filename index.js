@@ -3,8 +3,8 @@ const github = require('@actions/github');
 
 async function run() {
   try {
-    const client = new github.GitHub(core.getInput('github-token'));
-    console.log(core.getInput('github-token'));
+    const client = new github.GitHub(core.getInput('repo-token'));
+    console.log("tok: "+ core.getInput('repo-token'));
 
     const {
       payload: {pull_request: pullRequest, repository},
