@@ -1,7 +1,4 @@
 # This is a basic workflow to help you get started with Actions
-
-name: Tag
-
 on:
   pull_request:
     types: [ opened, synchronize, reopened, closed ]
@@ -13,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Tag
     steps:
-    - name: Tag
-      id: tag
       uses: bmon/merge-tag-action@v1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+

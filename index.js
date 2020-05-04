@@ -3,7 +3,7 @@ const github = require('@actions/github');
 
 async function run() {
   try {
-    const client = new github.Github(core.getInput('githubToken'));
+    const client = new github.GitHub(core.getInput('githubToken'));
 
     const {
       payload: {pull_request: pullRequest, repository},

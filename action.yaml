@@ -1,5 +1,9 @@
 name: 'Merge Tag'
 description: 'Tag commits on master as they are merged'
+inputs:
+  github-token:
+    description: "a github token for API access"
+    required: true
 runs:
   using: 'node12'
   main: 'index.js'
