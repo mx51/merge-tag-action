@@ -20,10 +20,10 @@ async function run() {
       pull_number: pullNumber,
     }
     const comments = await client.pulls.listComments(prRef);
-    console.log(`comments: ${comments}`)
+    log(comments, "comments")
 
     const commits = await client.pulls.listCommits(prRef);
-    console.log(`commits: ${commits}`)
+    log(commits, "commits")
 
     // Get the JSON webhook payload for the event that triggered the workflow
     console.log(`merged: ${github.context.payload.pull_request.merged}`)
@@ -34,6 +34,11 @@ async function run() {
   } catch (error) {
     core.setFailed(error.message);
   }
+}
+
+function log(data, name) {
+  const s = JSON.stringify(data, undefined, 2)
+  console.log(`${name}, ${s}`)
 }
 
 run();
