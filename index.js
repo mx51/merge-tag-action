@@ -19,9 +19,11 @@ async function run() {
       repo,
       pull_number: pullNumber,
     }
-    const {data: comments} = await client.pulls.listComments(prRef);
-
+    const comments = await client.pulls.listComments(prRef);
     console.log(`comments: ${comments}`)
+
+    const commits = await client.pulls.listCommits(prRef);
+    console.log(`commits: ${commits}`)
 
     // Get the JSON webhook payload for the event that triggered the workflow
     console.log(`merged: ${github.context.payload.pull_request.merged}`)
