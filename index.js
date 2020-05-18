@@ -6,7 +6,7 @@ async function run() {
     const client = new github.GitHub(core.getInput('repo-token'));
     const pullRef = getPullRef(github.context);
 
-    const changeType = getChangeTypeForContext(client, github.context);
+    const changeType = await getChangeTypeForContext(client, github.context);
 
     oktokit.issues.update({
       owner: pullRef.owner,
@@ -36,7 +36,7 @@ function log(data, name) {
   console.log(`${name}, ${s}`)
 }
 
-function getChangeTypeForContext(client, context) {
+async function getChangeTypeForContext(client, context) {
   const titleTag = getChangeTypeForString(context.pull_request.title);
   const bodyTag = getChangeTypeForString(context.pull_request.body);
   if (titleTag !== "") {
