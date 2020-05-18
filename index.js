@@ -7,13 +7,17 @@ async function run() {
     const pullRef = getPullRef();
 
     const changeType = await getChangeTypeForContext(client);
+    if (changeType !== ""){
+      log(changeType, "changeType")
 
-    client.issues.update({
-      owner: pullRef.owner,
-      repo: pullRef.repo,
-      issue_number: pullRef.pull_number,
-      labels: [changeType],
-    })
+      client.issues.update({
+        owner: pullRef.owner,
+        repo: pullRef.repo,
+        issue_number: pullRef.pull_number,
+        labels: [changeType],
+      });
+      updatePRTitle(changeType);
+    }
 
 
   } catch (error) {
@@ -62,6 +66,7 @@ async function getChangeTypeForContext(client) {
       return tag;
     }
   }
+  return "";
 }
 
 function getChangeTypeForString(string) {
@@ -108,3 +113,19 @@ function countOccurrences(string, regex) {
 }
 
 run();
+
+function updatePRTitle(changeType) {
+  const ref = getPullRef();
+  // get the existing title and remove any tags
+  let title = github.context.payload.pull_request.title;
+  title = title.replace(/[\s?major\s?]/gi, '').replace(/[#!]major/gi, '');
+  title = title.replace(/[\s?minor\s?]/gi, '').replace(/[#!]minor/gi, '');
+  title = title.replace(/[\s?patch\s?]/gi, '').replace(/[#!]patch/gi, '');
+  // prepend the new tag
+  title = `[${changeType}] ${title.trim()}`;
+
+  return client.pulls.update({
+    ...ref,
+    title: title,
+  });
+}
