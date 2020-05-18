@@ -68,7 +68,9 @@ async function getChangeTypeForContext(client) {
 
   const pullRef = getPullRef();
   const commits = await client.pulls.listCommits(pullRef);
+  log(commits.data, 'commits data');
   for (let commit of commits.data.reverse()) {
+    log(commit, "commit");
     const tag = getChangeTypeForString(commit.message);
     if (tag !== "") {
       return tag;
