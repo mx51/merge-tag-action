@@ -12,7 +12,7 @@ async function run() {
 
     const changeType = await getChangeTypeForContext(client);
     if (changeType !== "") {
-      log(changeType, "changeType")
+      log("changeType", changeType)
 
       await Promise.all([
         client.issues.update({
@@ -24,7 +24,7 @@ async function run() {
         updatePRTitle(client, changeType),
       ]);
     } else {
-      log(changeType, "failed to match changeType")
+      log("failed to match changeType", changeType);
     }
 
 
@@ -44,9 +44,9 @@ async function run() {
   }
 }
 
-function log(data, name) {
+function log(name, data) {
   const s = JSON.stringify(data, undefined, 2)
-  console.log(`${name}, ${s}`)
+  console.log(`${name}: ${s}`)
 }
 
 async function getChangeTypeForContext(client) {
@@ -68,10 +68,10 @@ async function getChangeTypeForContext(client) {
 
   const pullRef = getPullRef();
   const commits = await client.pulls.listCommits(pullRef);
-  log(commits.data, 'commits data');
   for (let commit of commits.data.reverse()) {
-    log(commit, "commit");
     const tag = getChangeTypeForString(commit.commit.message);
+    log("msg", commit.commit.message);
+    log("tag", tag);
     if (tag !== "") {
       return tag;
     }
@@ -80,9 +80,6 @@ async function getChangeTypeForContext(client) {
 }
 
 function getChangeTypeForString(string) {
-  if (typeof string !== "string") {
-    return ""
-  }
   const major = countOccurrences(string, MAJOR_RE);
   if (major > 0) {
     return "major";
@@ -126,12 +123,12 @@ function updatePRTitle(client, changeType) {
   const ref = getPullRef();
   // get the existing title and remove any tags
   let title = github.context.payload.pull_request.title;
-  log(title, "old title");
+  log("old title", title);
   title = title.replace(MAJOR_RE, '');
   title = title.replace(MINOR_RE, '');
   title = title.replace(PATCH_RE, '');
   // prepend the new tag
-  log(title, "new title");
+  log("new title", title);
   title = `[${changeType}] ${title.trim()}`;
 
   return client.pulls.update({
