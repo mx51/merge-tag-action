@@ -5,6 +5,8 @@ const MAJOR_RE = /#major|\[\s?major\s?\]/gi
 const MINOR_RE = /#minor|\[\s?minor\s?\]/gi
 const PATCH_RE = /#patch|\[\s?patch\s?\]/gi
 
+const VERSION_REGEX = /v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/
+
 async function run() {
   const client = new github.GitHub(core.getInput('repo-token'));
   const changeType = await getChangeTypeForContext(client);
@@ -39,7 +41,13 @@ function updatePRTitle(client, changeType) {
 function tagRelease(client, changeType) {
   const ref = getPullRef();
 
-  const previousTag = '';
+  const latestRelease = client.repos.getLatestRelease({
+    owner: ref.owner,
+    repo: ref.repo,
+  });
+  log("latestRelease", latestRelease);
+
+  const previousTag = 'v1.2.3';
   const tag = getNextTag(previousTag, changeType);
 
   return client.repos.createRelease({
@@ -50,7 +58,21 @@ function tagRelease(client, changeType) {
 }
 
 function getNextTag(previousTag, changeType) {
-  return "v1.2.3";
+  const version = previousTag.match(VERSION_REGEX).groups;
+  switch (changeType) {
+    case "major":
+      version.major = Number(version.major) + 1;
+      break;
+    case "minor":
+      version.minor = Number(version.minor) + 1;
+      break;
+    case "patch":
+      version.patch = Number(version.patch) + 1;
+      break;
+    default:
+      throw new Error("Attempted to bump with invalid changeType: " + changeType);
+  }
+  return `v${version.major}.${version.minor}.${version.patch}`;
 }
 
 async function getChangeTypeForContext(client) {
