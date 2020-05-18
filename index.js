@@ -11,7 +11,7 @@ async function run() {
     const pullRef = getPullRef();
 
     const changeType = await getChangeTypeForContext(client);
-    if (changeType !== ""){
+    if (changeType !== "") {
       log(changeType, "changeType")
 
       await Promise.all([
@@ -23,6 +23,8 @@ async function run() {
         }),
         updatePRTitle(client, changeType),
       ]);
+    } else {
+      log(changeType, "failed to match changeType")
     }
 
 
