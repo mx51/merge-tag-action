@@ -38,8 +38,8 @@ function log(data, name) {
 }
 
 async function getChangeTypeForContext(client) {
-  const titleTag = getChangeTypeForString(github.context.pull_request.title);
-  const bodyTag = getChangeTypeForString(github.context.pull_request.body);
+  const titleTag = getChangeTypeForString(github.context.payload.pull_request.title);
+  const bodyTag = getChangeTypeForString(github.context.payload.pull_request.body);
   if (titleTag !== "") {
     if (bodyTag !== "") {
       if (titleTag === bodyTag) {
