@@ -65,6 +65,9 @@ async function getChangeTypeForContext(client) {
 }
 
 function getChangeTypeForString(string) {
+  if (string == "") {
+    return ""
+  }
   const major = countOccurrences(string, /[\s?major\s?]/gi) + countOccurrences(string, /[#!]major/gi);
   if (major > 0) {
     return "major";
