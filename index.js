@@ -6,78 +6,74 @@ const MINOR_RE = /#minor|\[\s?minor\s?\]/gi
 const PATCH_RE = /#patch|\[\s?patch\s?\]/gi
 
 async function run() {
-  try {
-    const client = new github.GitHub(core.getInput('repo-token'));
-    const pullRef = getPullRef();
-
-    const changeType = await getChangeTypeForContext(client);
-    if (changeType !== "") {
-      log("changeType", changeType)
-
-      await Promise.all([
-        client.issues.update({
-          owner: pullRef.owner,
-          repo: pullRef.repo,
-          issue_number: pullRef.pull_number,
-          labels: [changeType],
-        }),
-        updatePRTitle(client, changeType),
-      ]);
-    } else {
-      log("failed to match changeType", changeType);
+  const client = new github.GitHub(core.getInput('repo-token'));
+  const changeType = await getChangeTypeForContext(client);
+  if (changeType !== "") {
+    // if just merged, tag and release
+    if (context.payload.action === "closed" && context.payload.pull_request.merged === true) {
+      return tagRelease(client, changeType);
     }
-
-
-  } catch (error) {
-
-    //const comments = await client.pulls.listComments(pullRef);
-    //log(comments, "comments");
-
-    //const commits = await client.pulls.listCommits(pullRef);
-    //log(commits, "commits");
-
-    // Get the JSON webhook payload for the event that triggered the workflow
-    console.log(`merged: ${github.context.payload.pull_request.merged}`);
-    console.log(`action: ${github.context.payload.action}`);
-    //log(github.context.payload, "github.context.payload");
-    core.setFailed(error.message);
+    // otherwise update the title.
+    return updatePRTitle(client, changeType);
+  } else {
+    throw new Error("Failed to identify a valid change type. Check the workflow logs for more info.");
   }
 }
 
-function log(name, data) {
-  const s = JSON.stringify(data, undefined, 2)
-  console.log(`${name}: ${s}`)
+function updatePRTitle(client, changeType) {
+  const ref = getPullRef();
+  // get the existing title and remove any tags
+  let title = github.context.payload.pull_request.title;
+  title = title.replace(MAJOR_RE, '');
+  title = title.replace(MINOR_RE, '');
+  title = title.replace(PATCH_RE, '');
+  // prepend the new tag
+  title = `[${changeType}] ${title.trim()}`;
+
+  return client.pulls.update({
+    ...ref,
+    title: title,
+  });
+}
+
+function tagRelease(client, changeType) {
+  const ref = getPullRef();
+
+  const previousTag = '';
+  const tag = getNextTag(previousTag, changeType);
+
+  return client.repos.createRelease({
+    owner: ref.owner,
+    repo: ref.repo,
+    tag_name: tag,
+  });
+}
+
+function getNextTag(previousTag, changeType) {
+  return "v1.2.3";
 }
 
 async function getChangeTypeForContext(client) {
   const titleTag = getChangeTypeForString(github.context.payload.pull_request.title);
-  const bodyTag = getChangeTypeForString(github.context.payload.pull_request.body);
   if (titleTag !== "") {
-    if (bodyTag !== "") {
-      if (titleTag === bodyTag) {
-        return titleTag
-      }
-      throw "title and body do not match"
-    }
     return titleTag;
-  } else {
-    if (bodyTag !== "") {
-      return bodyTag
-    }
+  }
+  const bodyTag = getChangeTypeForString(github.context.payload.pull_request.body);
+  if (bodyTag !== "") {
+    return bodyTag;
   }
 
   const pullRef = getPullRef();
   const commits = await client.pulls.listCommits(pullRef);
   for (let commit of commits.data.reverse()) {
     const tag = getChangeTypeForString(commit.commit.message);
-    log("msg", commit.commit.message);
-    log("tag", tag);
     if (tag !== "") {
       return tag;
     }
   }
   return "";
 }
+
 
 function getChangeTypeForString(string) {
   const major = countOccurrences(string, MAJOR_RE);
@@ -119,22 +115,15 @@ function countOccurrences(string, regex) {
   return (string.match(regex) || []).length
 }
 
-function updatePRTitle(client, changeType) {
-  const ref = getPullRef();
-  // get the existing title and remove any tags
-  let title = github.context.payload.pull_request.title;
-  log("old title", title);
-  title = title.replace(MAJOR_RE, '');
-  title = title.replace(MINOR_RE, '');
-  title = title.replace(PATCH_RE, '');
-  // prepend the new tag
-  log("new title", title);
-  title = `[${changeType}] ${title.trim()}`;
 
-  return client.pulls.update({
-    ...ref,
-    title: title,
-  });
+
+function log(name, data) {
+  const s = JSON.stringify(data, undefined, 2)
+  console.log(`${name}: ${s}`)
 }
 
-run();
+
+run()
+  .catch(error => {
+    core.setFailed(error.message);
+  });
