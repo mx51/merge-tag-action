@@ -27,7 +27,7 @@ async function run() {
     // Get the JSON webhook payload for the event that triggered the workflow
     console.log(`merged: ${github.context.payload.pull_request.merged}`);
     console.log(`action: ${github.context.payload.action}`);
-    log(github.context.payload, "github.context.payload");
+    //log(github.context.payload, "github.context.payload");
     core.setFailed(error.message);
   }
 }
@@ -82,14 +82,19 @@ function getChangeTypeForString(string) {
 }
 
 function getPullRef(context) {
-  const repoFullName = context.payload.repository.full_name;
-  const [owner, repo] = repoFullName.split("/");
-  const pullNumber = context.payload.pull_request.number;
+  try {
+    const repoFullName = context.payload.repository.full_name;
+    const [owner, repo] = repoFullName.split("/");
+    const pullNumber = context.payload.pull_request.number;
 
-  return {
-    owner,
-    repo,
-    pull_number: pullNumber,
+    return {
+      owner,
+      repo,
+      pull_number: pullNumber,
+    }
+  }
+  catch (e) {
+    console.trace([context, e])
   }
 }
 
