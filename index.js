@@ -16,7 +16,7 @@ async function run() {
         issue_number: pullRef.pull_number,
         labels: [changeType],
       });
-      updatePRTitle(changeType);
+      updatePRTitle(client, changeType);
     }
 
 
@@ -114,7 +114,7 @@ function countOccurrences(string, regex) {
 
 run();
 
-function updatePRTitle(changeType) {
+function updatePRTitle(client, changeType) {
   const ref = getPullRef();
   // get the existing title and remove any tags
   let title = github.context.payload.pull_request.title;
