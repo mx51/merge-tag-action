@@ -14,7 +14,7 @@ async function run() {
     if (changeType !== ""){
       log(changeType, "changeType")
 
-      return Promise.all([
+      await Promise.all([
         client.issues.update({
           owner: pullRef.owner,
           repo: pullRef.repo,
@@ -118,8 +118,6 @@ function countOccurrences(string, regex) {
   return (string.match(regex) || []).length
 }
 
-run();
-
 function updatePRTitle(client, changeType) {
   const ref = getPullRef();
   // get the existing title and remove any tags
@@ -137,3 +135,5 @@ function updatePRTitle(client, changeType) {
     title: title,
   });
 }
+
+run();
