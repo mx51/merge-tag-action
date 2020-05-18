@@ -1,6 +1,10 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
+const MAJOR_RE = /#major|\[\s?major\s?\]/gi
+const MINOR_RE = /#minor|\[\s?minor\s?\]/gi
+const PATCH_RE = /#patch|\[\s?patch\s?\]/gi
+
 async function run() {
   try {
     const client = new github.GitHub(core.getInput('repo-token'));
@@ -73,15 +77,15 @@ function getChangeTypeForString(string) {
   if (typeof string !== "string") {
     return ""
   }
-  const major = countOccurrences(string, /[\s?major\s?]/gi) + countOccurrences(string, /[#!]major/gi);
+  const major = countOccurrences(string, MAJOR_RE);
   if (major > 0) {
     return "major";
   }
-  const minor = countOccurrences(string, /[\s?minor\s?]/gi) + countOccurrences(string, /[#!]minor/gi);
+  const minor = countOccurrences(string, MINOR_RE);
   if (minor > 0) {
     return "minor"
   }
-  const patch = countOccurrences(string, /[\s?patch\s?]/gi) + countOccurrences(string, /[#!]patch/gi);
+  const patch = countOccurrences(string, PATCH_RE);
   if (patch > 0) {
     return "patch"
   }
@@ -118,10 +122,12 @@ function updatePRTitle(client, changeType) {
   const ref = getPullRef();
   // get the existing title and remove any tags
   let title = github.context.payload.pull_request.title;
-  title = title.replace(/[\s?major\s?]/gi, '').replace(/[#!]major/gi, '');
-  title = title.replace(/[\s?minor\s?]/gi, '').replace(/[#!]minor/gi, '');
-  title = title.replace(/[\s?patch\s?]/gi, '').replace(/[#!]patch/gi, '');
+  log(title, "old title");
+  title = title.replace(MAJOR_RE, '');
+  title = title.replace(MINOR_RE, '');
+  title = title.replace(PATCH_RE, '');
   // prepend the new tag
+  log(title, "new title");
   title = `[${changeType}] ${title.trim()}`;
 
   return client.pulls.update({
