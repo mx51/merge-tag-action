@@ -10,7 +10,7 @@ async function run() {
   const changeType = await getChangeTypeForContext(client);
   if (changeType !== "") {
     // if just merged, tag and release
-    if (context.payload.action === "closed" && context.payload.pull_request.merged === true) {
+    if (github.context.payload.action === "closed" && github.context.payload.pull_request.merged === true) {
       return tagRelease(client, changeType);
     }
     // otherwise update the title.
