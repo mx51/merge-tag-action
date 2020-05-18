@@ -8,7 +8,7 @@ async function run() {
 
     const changeType = await getChangeTypeForContext(client);
 
-    github.issues.udate({
+    github.issues.update({
       owner: pullRef.owner,
       repo: pullRef.repo,
       issue_number: pullRef.pull_number,
