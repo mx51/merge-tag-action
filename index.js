@@ -15,18 +15,19 @@ async function run() {
       labels: [changeType],
     })
 
-    const comments = await client.pulls.listComments(pullRef);
-    log(comments, "comments");
 
-    const commits = await client.pulls.listCommits(pullRef);
-    log(commits, "commits");
+  } catch (error) {
+
+    //const comments = await client.pulls.listComments(pullRef);
+    //log(comments, "comments");
+
+    //const commits = await client.pulls.listCommits(pullRef);
+    //log(commits, "commits");
 
     // Get the JSON webhook payload for the event that triggered the workflow
     console.log(`merged: ${github.context.payload.pull_request.merged}`);
     console.log(`action: ${github.context.payload.action}`);
     log(github.context.payload, "github.context.payload");
-
-  } catch (error) {
     core.setFailed(error.message);
   }
 }
@@ -82,12 +83,8 @@ function getChangeTypeForString(string) {
 
 function getPullRef(context) {
   const repoFullName = context.payload.repository.full_name;
-  if (repoFullName === undefined) {
-    console.trace();
-    log(context, "getPullRef context");
-  }
   const [owner, repo] = repoFullName.split("/");
-  const pullNumber = pullRequest.number;
+  const pullNumber = context.payload.pull_request.number;
 
   return {
     owner,
