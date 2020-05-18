@@ -81,9 +81,9 @@ function getChangeTypeForString(string) {
 }
 
 function getPullRef(context) {
-  const repoFullName = context.payload.repository.repoFullName;
+  const repoFullName = context.payload.repository.full_name;
   if (repoFullName === undefined) {
-    console.trace(context);
+    console.trace();
     log(context, "getPullRef context");
   }
   const [owner, repo] = repoFullName.split("/");
