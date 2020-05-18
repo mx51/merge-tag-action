@@ -14,13 +14,15 @@ async function run() {
     if (changeType !== ""){
       log(changeType, "changeType")
 
-      client.issues.update({
-        owner: pullRef.owner,
-        repo: pullRef.repo,
-        issue_number: pullRef.pull_number,
-        labels: [changeType],
-      });
-      updatePRTitle(client, changeType);
+      return Promise.all([
+        client.issues.update({
+          owner: pullRef.owner,
+          repo: pullRef.repo,
+          issue_number: pullRef.pull_number,
+          labels: [changeType],
+        }),
+        updatePRTitle(client, changeType),
+      ]);
     }
 
 
