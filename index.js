@@ -8,7 +8,7 @@ async function run() {
 
     const changeType = await getChangeTypeForContext(client, github.context);
 
-    oktokit.issues.update({
+    oktokit.issues.udate({
       owner: pullRef.owner,
       repo: pullRef.repo,
       issue_number: pullRef.pull_number,
@@ -53,7 +53,7 @@ async function getChangeTypeForContext(client, context) {
     }
   }
 
-  pullRef = getPullRef(context);
+  const pullRef = getPullRef(context);
   const commits = await client.pulls.listCommits(pullRef);
   for (let commit of commits.data.reverse()) {
     const tag = getChangeTypeForString(commit.message);
@@ -82,6 +82,10 @@ function getChangeTypeForString(string) {
 
 function getPullRef(context) {
   const repoFullName = context.payload.repository.repoFullName;
+  if (repoFullName === undefined) {
+    console.trace(context);
+    log(context, "getPullRef context");
+  }
   const [owner, repo] = repoFullName.split("/");
   const pullNumber = pullRequest.number;
 
