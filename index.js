@@ -4,9 +4,9 @@ const github = require('@actions/github');
 async function run() {
   try {
     const client = new github.GitHub(core.getInput('repo-token'));
-    const pullRef = getPullRef(github.context);
+    const pullRef = getPullRef();
 
-    const changeType = await getChangeTypeForContext(client, github.context);
+    const changeType = await getChangeTypeForContext(client);
 
     oktokit.issues.udate({
       owner: pullRef.owner,
@@ -37,9 +37,9 @@ function log(data, name) {
   console.log(`${name}, ${s}`)
 }
 
-async function getChangeTypeForContext(client, context) {
-  const titleTag = getChangeTypeForString(context.pull_request.title);
-  const bodyTag = getChangeTypeForString(context.pull_request.body);
+async function getChangeTypeForContext(client) {
+  const titleTag = getChangeTypeForString(github.context.pull_request.title);
+  const bodyTag = getChangeTypeForString(github.context.pull_request.body);
   if (titleTag !== "") {
     if (bodyTag !== "") {
       if (titleTag === bodyTag) {
@@ -54,7 +54,7 @@ async function getChangeTypeForContext(client, context) {
     }
   }
 
-  const pullRef = getPullRef(context);
+  const pullRef = getPullRef();
   const commits = await client.pulls.listCommits(pullRef);
   for (let commit of commits.data.reverse()) {
     const tag = getChangeTypeForString(commit.message);
@@ -81,11 +81,11 @@ function getChangeTypeForString(string) {
   return ""
 }
 
-function getPullRef(context) {
+function getPullRef() {
   try {
-    const repoFullName = context.payload.repository.full_name;
+    const repoFullName = github.context.payload.repository.full_name;
     const [owner, repo] = repoFullName.split("/");
-    const pullNumber = context.payload.pull_request.number;
+    const pullNumber = github.context.payload.pull_request.number;
 
     return {
       owner,
@@ -94,7 +94,7 @@ function getPullRef(context) {
     }
   }
   catch (e) {
-    console.trace([context, e])
+    console.trace([github.context, e])
   }
 }
 
