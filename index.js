@@ -10,18 +10,6 @@ const VERSION_REGEX = /v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/
 async function run() {
   const client = new github.GitHub(core.getInput('repo-token'));
 
-  const ref = getPullRef();
-  const latestRelease = await client.repos.getLatestRelease({
-    owner: ref.owner,
-    repo: ref.repo,
-  });
-  log("latestRelease", latestRelease);
-  const tags = await client.repos.listTags({
-    owner: ref.owner,
-    repo: ref.repo,
-  });
-  log("tags", tags);
-
   const changeType = await getChangeTypeForContext(client);
   if (changeType !== "") {
     // if just merged, tag and release
@@ -53,20 +41,16 @@ function updatePRTitle(client, changeType) {
 
 function tagRelease(client, changeType) {
   const ref = getPullRef();
-
-  const latestRelease = client.repos.getLatestRelease({
+  const latestRelease = await client.repos.getLatestRelease({
     owner: ref.owner,
     repo: ref.repo,
   });
-  log("latestRelease", latestRelease);
-
-  const previousTag = 'v1.2.3';
-  const tag = getNextTag(previousTag, changeType);
+  const newTag = getNextTag(latestRelease.data.tag_name, changeType);
 
   return client.repos.createRelease({
     owner: ref.owner,
     repo: ref.repo,
-    tag_name: tag,
+    tag_name: newTag,
   });
 }
 
