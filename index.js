@@ -9,6 +9,13 @@ const VERSION_REGEX = /v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/
 
 async function run() {
   const client = new github.GitHub(core.getInput('repo-token'));
+
+  const latestRelease = client.repos.getLatestRelease({
+    owner: ref.owner,
+    repo: ref.repo,
+  });
+  log("latestRelease", latestRelease);
+
   const changeType = await getChangeTypeForContext(client);
   if (changeType !== "") {
     // if just merged, tag and release
