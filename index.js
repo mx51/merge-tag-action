@@ -1,11 +1,11 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
+const graphql = require('@octokit/graphql');
+const semver = require('semver');
 
 const MAJOR_RE = /#major|\[\s?major\s?\]/gi
 const MINOR_RE = /#minor|\[\s?minor\s?\]/gi
 const PATCH_RE = /#patch|\[\s?patch\s?\]/gi
-
-const VERSION_REGEX = /v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/
 
 async function run() {
   const client = new github.GitHub(core.getInput('repo-token'));
@@ -41,38 +41,14 @@ function updatePRTitle(client, changeType) {
 
 async function tagRelease(client, changeType) {
   const ref = getPullRef();
-  const latestRelease = await client.repos.getLatestRelease({
-    owner: ref.owner,
-    repo: ref.repo,
-  });
-  const newTag = getNextTag(latestRelease.data.tag_name, changeType);
+  const latestTag = await getLatestTag(ref.owner, ref.repo);
+  const newTag = 'v' + semver.inc(latestTag, changeType);
 
   return client.repos.createRelease({
     owner: ref.owner,
     repo: ref.repo,
     tag_name: newTag,
   });
-}
-
-function getNextTag(previousTag, changeType) {
-  const version = previousTag.match(VERSION_REGEX).groups;
-  switch (changeType) {
-    case "major":
-      version.major = Number(version.major) + 1;
-      version.minor = 0
-      version.patch = 0
-      break;
-    case "minor":
-      version.minor = Number(version.minor) + 1;
-      version.patch = 0
-      break;
-    case "patch":
-      version.patch = Number(version.patch) + 1;
-      break;
-    default:
-      throw new Error("Attempted to bump with invalid changeType: " + changeType);
-  }
-  return `v${version.major}.${version.minor}.${version.patch}`;
 }
 
 async function getChangeTypeForContext(client) {
@@ -96,6 +72,41 @@ async function getChangeTypeForContext(client) {
   return "";
 }
 
+async function getLatestTag(owner, repo) {
+  const query = `
+query latestTags($owner: String!, $repo: String!, $num: Int = 1) {
+  repository(owner:$owner, name:$repo) {
+    refs(refPrefix: "refs/tags/", first:$num , orderBy: {field: TAG_COMMIT_DATE, direction: DESC}) {
+      edges {
+        node {
+          name
+          target {
+            oid
+            ... on Tag {
+              message
+              commitUrl
+              tagger {
+                name
+                email
+                date
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+  const result = await graphql(query, {
+    owner,
+    repo,
+    headers: {
+      authorization: `token ${core.getInput('repo-token')}`,
+    }
+  });
+  return result.repository.refs.edges[0].node.name;
+}
 
 function getChangeTypeForString(string) {
   if (typeof string !== "string") {
@@ -119,19 +130,14 @@ function getChangeTypeForString(string) {
 }
 
 function getPullRef() {
-  try {
-    const repoFullName = github.context.payload.repository.full_name;
-    const [owner, repo] = repoFullName.split("/");
-    const pullNumber = github.context.payload.pull_request.number;
+  const repoFullName = github.context.payload.repository.full_name;
+  const [owner, repo] = repoFullName.split("/");
+  const pullNumber = github.context.payload.pull_request.number;
 
-    return {
-      owner,
-      repo,
-      pull_number: pullNumber,
-    }
-  }
-  catch (e) {
-    console.trace([github.context, e])
+  return {
+    owner,
+    repo,
+    pull_number: pullNumber,
   }
 }
 
