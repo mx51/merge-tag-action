@@ -136,6 +136,7 @@ function countOccurrences(string, regex) {
 
 run()
   .catch(error => {
-    core.setFailed(error.message);
+    core.info("An error occurred");
     core.info(error.stack);
+    core.setFailed(error.message);
   });
