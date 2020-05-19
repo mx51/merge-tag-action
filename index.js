@@ -9,15 +9,24 @@ const PATCH_RE = /#patch|\[\s?patch\s?\]/gi
 
 async function run() {
   const client = new github.GitHub(core.getInput('repo-token'));
+  const ref = getPullRef();
 
   const changeType = await getChangeTypeForContext(client);
   if (changeType !== "") {
+    const nextVersion = await getNewVersionTag(client, changeType);
     // if just merged, tag and release
     if (github.context.payload.action === "closed" && github.context.payload.pull_request.merged === true) {
-      return tagRelease(client, changeType);
+      return client.repos.createRelease({
+        owner: ref.owner,
+        repo: ref.repo,
+        tag_name: nextVersion,
+      });
     }
-    // otherwise update the title.
-    return updatePRTitle(client, changeType);
+    // otherwise update the title, and make a comment.
+    return Promise.All([
+      updatePRTitle(changeType),
+      createPRCommentOnce(client, `After merging this PR, https://github.com/${ref.owner}/${ref.repo} will be version \`${nextVersion}\`. Note this may no longer be correct if another PR is merged.`),
+    ]);
   } else {
     throw new Error("Failed to identify a valid change type. Check the workflow logs for more info.");
   }
@@ -39,17 +48,33 @@ function updatePRTitle(client, changeType) {
   });
 }
 
-async function tagRelease(client, changeType) {
+async function getNewVersionTag(changeType) {
   const ref = getPullRef();
   const latestTag = await getLatestTag(ref.owner, ref.repo);
-  const newTag = 'v' + semver.inc(latestTag, changeType);
+  return 'v' + semver.inc(latestTag, changeType);
+}
 
-  return client.repos.createRelease({
+function createPRCommentOnce(client, message) {
+  const ref = getPullRef();
+
+  return client.issues.listComments({
     owner: ref.owner,
     repo: ref.repo,
-    tag_name: newTag,
+    issue_number: ref.pull_number,
+    per_page: 100,
+  }).then(res => {
+    // only create the comment if it does not exist already
+    if (res.data.filter(comment => comment.body === message).length === 0) {
+      return client.issues.createComment({
+        owner: ref.owner,
+        repo: ref.repo,
+        issue_number: ref.pull_number,
+        body: message,
+      });
+    };
   });
 }
+
 
 async function getChangeTypeForContext(client) {
   const titleTag = getChangeTypeForString(github.context.payload.pull_request.title);
