@@ -134,15 +134,8 @@ function countOccurrences(string, regex) {
   return (string.match(regex) || []).length
 }
 
-
-
-function log(name, data) {
-  const s = JSON.stringify(data, undefined, 2)
-  console.log(`${name}: ${s}`)
-}
-
-
 run()
   .catch(error => {
     core.setFailed(error.message);
+    core.info(error.stack);
   });
