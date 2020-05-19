@@ -39,7 +39,7 @@ function updatePRTitle(client, changeType) {
   });
 }
 
-function tagRelease(client, changeType) {
+function async tagRelease(client, changeType) {
   const ref = getPullRef();
   const latestRelease = await client.repos.getLatestRelease({
     owner: ref.owner,
