@@ -16,11 +16,11 @@ async function run() {
     repo: ref.repo,
   });
   log("latestRelease", latestRelease);
-  const latestRelease = await client.repos.listTags({
+  const tags = await client.repos.listTags({
     owner: ref.owner,
     repo: ref.repo,
   });
-  log("tags", latestRelease);
+  log("tags", tags);
 
   const changeType = await getChangeTypeForContext(client);
   if (changeType !== "") {
