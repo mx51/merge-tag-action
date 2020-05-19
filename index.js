@@ -1,5 +1,6 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
+const graphql = require('@octokit/graphql');
 
 const MAJOR_RE = /#major|\[\s?major\s?\]/gi
 const MINOR_RE = /#minor|\[\s?minor\s?\]/gi
@@ -41,11 +42,10 @@ function updatePRTitle(client, changeType) {
 
 async function tagRelease(client, changeType) {
   const ref = getPullRef();
-  const latestRelease = await client.repos.getLatestRelease({
-    owner: ref.owner,
-    repo: ref.repo,
-  });
-  const newTag = getNextTag(latestRelease.data.tag_name, changeType);
+  // We get the previous tag from the latestRelease. Perhaps this should come
+  // from the tag listing instead.
+  const latestTag = await getLatestTag(ref.owner, ref.repo);
+  const newTag = getNextTag(latestTag, changeType);
 
   return client.repos.createRelease({
     owner: ref.owner,
@@ -96,6 +96,41 @@ async function getChangeTypeForContext(client) {
   return "";
 }
 
+async function getLatestTag(owner, repo) {
+  const query = `
+query latestTags($owner: String!, $repo: String!, $num: Int = 1) {
+  repository(owner:$owner, name:$repo) {
+    refs(refPrefix: "refs/tags/", first:$num , orderBy: {field: TAG_COMMIT_DATE, direction: DESC}) {
+      edges {
+        node {
+          name
+          target {
+            oid
+            ... on Tag {
+              message
+              commitUrl
+              tagger {
+                name
+                email
+                date
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+  const result = await graphql(query, {
+    owner,
+    repo,
+    headers: {
+      authorization: `token ${core.getInput('repo-token')}`,
+    }
+  });
+  return result.repository.refs.edges[0].node.name;
+}
 
 function getChangeTypeForString(string) {
   if (typeof string !== "string") {
