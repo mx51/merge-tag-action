@@ -1,5 +1,5 @@
 ## merge-tag-action
 
-automatically tags commits to master after a merge
+Automatically tags commits to master after a merge. This action will also place a comment suggesting which version is likely to be applied.
 
-add this to your .github/workflows folder to enable it
+Add this to your .github/workflows folder to enable it.
