@@ -59,9 +59,12 @@ function getNextTag(previousTag, changeType) {
   switch (changeType) {
     case "major":
       version.major = Number(version.major) + 1;
+      version.minor = 0
+      version.patch = 0
       break;
     case "minor":
       version.minor = Number(version.minor) + 1;
+      version.patch = 0
       break;
     case "patch":
       version.patch = Number(version.patch) + 1;
