@@ -95,6 +95,10 @@ async function getChangeTypeForContext(client) {
 
 
 function getChangeTypeForString(string) {
+  if (typeof string !== "string") {
+    core.warning(`called getChangeTypeForString with non string: ${string}`)
+    return ""
+  }
   const major = countOccurrences(string, MAJOR_RE);
   if (major > 0) {
     return "major";
@@ -134,15 +138,8 @@ function countOccurrences(string, regex) {
   return (string.match(regex) || []).length
 }
 
-
-
-function log(name, data) {
-  const s = JSON.stringify(data, undefined, 2)
-  console.log(`${name}: ${s}`)
-}
-
-
 run()
   .catch(error => {
+    core.info(error.stack);
     core.setFailed(error.message);
   });
