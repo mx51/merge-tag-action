@@ -30,7 +30,8 @@ async function run() {
       createPRCommentOnce(client, `After merging this PR, https://github.com/${ref.owner}/${ref.repo} will be version \`${nextVersion}\`. Note this may no longer be correct if another PR is merged.`),
     ]);
   } else {
-    throw new Error("Failed to identify a valid change type. Check the workflow logs for more info.");
+    await createPRCommentOnce(client, "Failed to identify a valid changetype for this pull request. Please specify either `[major]`, `[minor]`, or `[patch]` in the PR title.");
+    throw new Error("Failed to identify a valid change type.");
   }
 }
 
