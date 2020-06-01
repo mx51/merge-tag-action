@@ -106,7 +106,7 @@ async function getChangeTypeForContext(client) {
 
 async function getLatestTag(owner, repo) {
   const query = `
-query latestTags($owner: String!, $repo: String!, $num: Int = 1) {
+query latestTags($owner: String!, $repo: String!, $num: Int = 30) {
   repository(owner:$owner, name:$repo) {
     refs(refPrefix: "refs/tags/", first:$num , orderBy: {field: TAG_COMMIT_DATE, direction: DESC}) {
       edges {
@@ -137,7 +137,12 @@ query latestTags($owner: String!, $repo: String!, $num: Int = 1) {
       authorization: `token ${core.getInput('repo-token')}`,
     }
   });
-  return result.repository.refs.edges[0].node.name;
+  for (const edge of result.repository.refs.edges) {
+    if (semver.valid(edge.node.name)) {
+      return edge.node.name;
+    }
+  }
+  throw new Error("Failed to identify valid recent semver tag. Perhaps you need to manually tag master?")
 }
 
 function getChangeTypeForString(string) {
