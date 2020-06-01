@@ -54,7 +54,11 @@ function updatePRTitle(client, changeType) {
 async function getNewVersionTag(changeType) {
   const ref = getPullRef();
   const latestTag = await getLatestTag(ref.owner, ref.repo);
-  return 'v' + semver.inc(latestTag, changeType);
+  const newTag = 'v' + semver.inc(latestTag, changeType);
+  if (!semver.valid(newTag)) {
+    throw new Error(`Failed to generate valid new version tag. changeType: ${changeType} latestTag: ${latestTag} newTag: ${newTag}`);
+  }
+  return newTag;
 }
 
 function createPRCommentOnce(client, message) {
