@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     name: tag
     steps:
-    - uses: bmon/merge-tag-action@v1
+    - uses: mx51/merge-tag-action@v1
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-
