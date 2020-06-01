@@ -37,4 +37,3 @@ jobs:
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
 ```
-
