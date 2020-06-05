@@ -21,7 +21,9 @@ async function run() {
         repo: ref.repo,
         tag_name: nextVersion,
       }).then(() => {
-        return createPRCommentOnce(client, `Merged and tagged as \`${nextVersion}\`.`)
+        return createPRCommentOnce(client, `Merged and tagged as \`${nextVersion}\`.
+
+          Buildkite: https://buildkite.com/assembly-payments/build-${ref.repo}/builds?branch=${nextVersion}`)
       });
     }
     // otherwise update the title, and make a comment.
