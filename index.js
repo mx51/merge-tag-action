@@ -16,45 +16,7 @@ async function run() {
     const nextVersion = await getNewVersionTag(changeType);
     // if just merged, tag and release
     if (github.context.payload.action === "closed" && github.context.payload.pull_request.merged === true) {
-      // Create annotated tag
-      console.info(`[info] Creating annotated git tag: ${nextVersion} ...`)
-      tagResponse = await client.git.createTag({
-        owner: ref.owner,
-        repo: ref.repo,
-        tag: nextVersion,
-        message: "[RELMGMT: Tagged " + nextVersion + "]",
-        object: process.env.GITHUB_SHA,
-        type: "commit"
-      });
-
-      // Check response
-      console.info('[info] Checking git tag response ...')
-      if (tagResponse.status !== 201) {
-        core.setFailed(`Failed to create git tag, tagResponse.status: ${tagResponse.status}`)
-      }
-
-      // Create ref (this is equivalent to git push, I think)
-      console.info(`[info] Creating tag ref: refs/tags/${nextVersion} ...`)
-      refResponse = await client.git.createRef({
-        owner: ref.owner,
-        repo: ref.repo,
-        ref: 'refs/tags/' + nextVersion,
-        sha: tagResponse.data.sha
-      });
-
-      // Check response
-      console.info(`[info] Checking git ref response ...`)
-      if (tagResponse.status !== 201) {
-        core.setFailed(`Failed to create git ref, refResponse.status: ${refResponse.status}`)
-      }
-
-      // Lastly, create github release
-      console.info(`[info] Creating github release: ${nextVersion} ...`)
-      return client.repos.createRelease({
-        owner: ref.owner,
-        repo: ref.repo,
-        tag_name: nextVersion,
-      }).then(() => {
+      return createAnnotatedTag(client, nextVersion).then(() => {
         return createPRCommentOnce(client, `Merged and tagged as \`${nextVersion}\`.`)
       });
     }
@@ -93,6 +55,48 @@ async function getNewVersionTag(changeType) {
     throw new Error(`Failed to generate valid new version tag. changeType: ${changeType} latestTag: ${latestTag} newTag: ${newTag}`);
   }
   return newTag;
+}
+
+function createAnnotatedTag(client, tagName) {
+  // Create annotated tag. https://octokit.github.io/rest.js/v18#git-create-tag
+  core.info(`Creating annotated git tag: ${tagName} ...`)
+  return client.git.createTag({
+    owner: ref.owner,
+    repo: ref.repo,
+    tag: tagName,
+    message: "[RELMGMT: Tagged " + tagName + "]",
+    object: process.env.GITHUB_SHA,
+    type: "commit"
+  }).then((tagResponse) => {
+    // Check response
+    core.info('Checking git tag response ...')
+    if (tagResponse.status !== 201) {
+      throw new Error(`Failed to create git tag, tagResponse.status: ${refResponse.status}`);
+    }
+    // Create reference
+    core.info(`Creating tag ref: refs/tags/${tagName} ...`)
+    return client.git.createRef({
+      owner: ref.owner,
+      repo: ref.repo,
+      ref: 'refs/tags/' + tagName,
+      sha: tagResponse.data.sha
+    })
+  }).then((refResponse) => {
+    // Check createRef response
+    core.info(`Checking git ref response ...`)
+    if (refResponse.status !== 201) {
+      throw new Error(`Failed to create git ref, refResponse.status: ${refResponse.status}`);
+    }
+  }).then(() => {
+    // Lastly, create github release.
+    // This may no longer be strictly necessary - perhaps we can remove this step in the future.
+    core.info(`Creating github release: ${tagName} ...`)
+    return client.repos.createRelease({
+      owner: ref.owner,
+      repo: ref.repo,
+      tag_name: tagName,
+    });
+  })
 }
 
 function createPRCommentOnce(client, message) {
