@@ -59,6 +59,7 @@ async function getNewVersionTag(changeType) {
 
 function createAnnotatedTag(client, tagName) {
   // Create annotated tag. https://octokit.github.io/rest.js/v18#git-create-tag
+  const ref = getPullRef();
   core.info(`Creating annotated git tag: ${tagName} ...`)
   return client.git.createTag({
     owner: ref.owner,
