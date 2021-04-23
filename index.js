@@ -23,7 +23,7 @@ async function run() {
     // otherwise update the title, and make a comment.
     return Promise.all([
       updatePRTitle(client, changeType),
-      createPRCommentOnce(client, `After merging this PR, https://github.com/${ref.owner}/${ref.repo} will be version \`${nextVersion}\`. Note this may no longer be correct if another PR is merged.`),
+      createPRCommentOnce(client, `After merging this PR, [${ref.repo}](https://github.com/${ref.owner}/${ref.repo}) will be version \`${nextVersion}\`. Note this may no longer be correct if another PR is merged.`),
     ]);
   } else {
     await createPRCommentOnce(client, "Failed to identify a valid changetype for this pull request. Please specify either `[major]`, `[minor]`, or `[patch]` in the PR title.");
