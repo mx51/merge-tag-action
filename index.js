@@ -13,7 +13,7 @@ async function run() {
   const ref = getPullRef();
 
   const changeType = await getChangeTypeForContext(client);
-  if (changeType !== "" changeType !== "notag") {
+  if (changeType !== "" && changeType !== "notag") {
     const nextVersion = await getNewVersionTag(changeType);
     // if just merged, tag and release
     if (github.context.payload.action === "closed" && github.context.payload.pull_request.merged === true) {
