@@ -29,7 +29,7 @@ async function run() {
   } else if(changeType === "notag") {
     return Promise.all([
       updatePRTitle(client, changeType),
-      createPRCommentOnce(client, "`[notag]` detected. A new git tag will not be created when this PR is merged.");
+      createPRCommentOnce(client, "`[notag]` detected. A new git tag will not be created when this PR is merged."),
     ]);
   } else {
     await createPRCommentOnce(client, "Failed to identify a valid changetype for this pull request. Please specify either `[major]`, `[minor]`, `[patch]` or `[notag]` in the PR title.");
