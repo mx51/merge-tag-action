@@ -6,13 +6,14 @@ const semver = require('semver');
 const MAJOR_RE = /#major|\[\s?major\s?\]/gi
 const MINOR_RE = /#minor|\[\s?minor\s?\]/gi
 const PATCH_RE = /#patch|\[\s?patch\s?\]/gi
+const NOTAG_RE = /#notag|\[\s?notag\s?\]/gi
 
 async function run() {
   const client = new github.GitHub(core.getInput('repo-token'));
   const ref = getPullRef();
 
   const changeType = await getChangeTypeForContext(client);
-  if (changeType !== "") {
+  if (changeType !== "" && changeType !== "notag") {
     const nextVersion = await getNewVersionTag(changeType);
     // if just merged, tag and release
     if (github.context.payload.action === "closed" && github.context.payload.pull_request.merged === true) {
@@ -25,8 +26,13 @@ async function run() {
       updatePRTitle(client, changeType),
       createPRCommentOnce(client, `After merging this PR, [${ref.repo}](https://github.com/${ref.owner}/${ref.repo}) will be version \`${nextVersion}\`. Note this may no longer be correct if another PR is merged.`),
     ]);
+  } else if(changeType === "notag") {
+    return Promise.all([
+      updatePRTitle(client, changeType),
+      createPRCommentOnce(client, "`[notag]` detected. A new git tag will not be created when this PR is merged."),
+    ]);
   } else {
-    await createPRCommentOnce(client, "Failed to identify a valid changetype for this pull request. Please specify either `[major]`, `[minor]`, or `[patch]` in the PR title.");
+    await createPRCommentOnce(client, "Failed to identify a valid changetype for this pull request. Please specify either `[major]`, `[minor]`, `[patch]` or `[notag]` in the PR title.");
     throw new Error("Failed to identify a valid change type.");
   }
 }
@@ -38,6 +44,7 @@ function updatePRTitle(client, changeType) {
   title = title.replace(MAJOR_RE, '');
   title = title.replace(MINOR_RE, '');
   title = title.replace(PATCH_RE, '');
+  title = title.replace(NOTAG_RE, '');
   // prepend the new tag
   title = `[${changeType}] ${title.trim()}`;
 
@@ -200,6 +207,10 @@ function getChangeTypeForString(string) {
   const patch = countOccurrences(string, PATCH_RE);
   if (patch > 0) {
     return "patch"
+  }
+  const notag = countOccurrences(string, NOTAG_RE);
+  if (notag > 0) {
+    return "notag"
   }
 
   return ""

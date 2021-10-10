@@ -4,7 +4,7 @@ Automatically tags commits on master after merging a pull request. This action w
 
 ## Usage
 
-After activating the action, flag your pull requests or commits using any of `[major]`, `[minor]`, `[patch]`, `#major`, `#minor`, `#patch`.
+After activating the action, flag your pull requests or commits using any of `[major]`, `[minor]`, `[patch]`, `[notag]`, `#major`, `#minor`, `#patch`, `#notag`.
 
 The easiest way to use this action is to put the change type in the PR title.
 
@@ -15,6 +15,13 @@ The action will identify the changetype by looking for any of the above strings.
 
 After identifying a change type, the action will update the PR title to have the tag at the front. After this has occurred, the best way
 to flag a new change type (if you change your mind, for example) is to update the PR title.
+
+
+## Please Note
+
+Projects that use `merge-tag-action` in their workflow can opt-out of automatic git tag creation after a PR merge by using the following labels in their PR title or body: `[notag]` or `#notag`.
+
+
 
 ## Installation
 
