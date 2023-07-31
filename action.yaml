@@ -4,6 +4,11 @@ inputs:
   repo-token:
     description: "a github token for API access"
     required: true
+outputs:
+  version:
+    description: "next/tagged version"
+  tagged:
+    description: "whether version was tagged (on merge) or not"
 runs:
   using: 'node16'
   main: 'index.js'

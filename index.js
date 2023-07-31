@@ -15,10 +15,11 @@ async function run() {
   const changeType = await getChangeTypeForContext(client);
   if (changeType !== "" && changeType !== "notag") {
     const nextVersion = await getNewVersionTag(changeType);
-    core.setOutput('NEXT_VERSION', `${nextVersion}`);
+    core.setOutput('version', `${nextVersion}`);
     // if just merged, tag and release
     if (github.context.payload.action === "closed" && github.context.payload.pull_request.merged === true) {
       return createAnnotatedTag(client, nextVersion).then(() => {
+        core.setOutput('tagged', true);
         return createPRCommentOnce(client, `Merged and tagged as \`${nextVersion}\`.`)
       });
     }
