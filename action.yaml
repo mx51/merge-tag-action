@@ -10,5 +10,5 @@ outputs:
   tagged:
     description: "whether version was tagged (on merge) or not"
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'index.js'
