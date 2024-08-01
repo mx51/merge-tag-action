@@ -9,16 +9,18 @@ const PATCH_RE = /#patch|\[\s?patch\s?\]/gi
 const NOTAG_RE = /#notag|\[\s?notag\s?\]/gi
 
 async function run() {
-  const client = new github.GitHub(core.getInput('repo-token'));
+  const client = new github.getOctokit(core.getInput('repo-token'));
   const ref = getPullRef();
 
   const changeType = await getChangeTypeForContext(client);
   if (changeType !== "" && changeType !== "notag") {
     const nextVersion = await getNewVersionTag(changeType);
+    core.info(`setting version as output: ${nextVersion}`)
     core.setOutput('version', `${nextVersion}`);
     // if just merged, tag and release
     if (github.context.payload.action === "closed" && github.context.payload.pull_request.merged === true) {
       return createAnnotatedTag(client, nextVersion).then(() => {
+        core.info(`setting tagged output to true`)
         core.setOutput('tagged', true);
         return createPRCommentOnce(client, `Merged and tagged as \`${nextVersion}\`.`)
       });
@@ -50,7 +52,7 @@ function updatePRTitle(client, changeType) {
   // prepend the new tag
   title = `[${changeType}] ${title.trim()}`;
 
-  return client.pulls.update({
+  return client.rest.pulls.update({
     ...ref,
     title: title,
   });
@@ -70,7 +72,7 @@ function createAnnotatedTag(client, tagName) {
   // Create annotated tag. https://octokit.github.io/rest.js/v18#git-create-tag
   const ref = getPullRef();
   core.info(`Creating annotated git tag: ${tagName} ...`)
-  return client.git.createTag({
+  return client.rest.git.createTag({
     owner: ref.owner,
     repo: ref.repo,
     tag: tagName,
@@ -85,7 +87,7 @@ function createAnnotatedTag(client, tagName) {
     }
     // Create reference
     core.info(`Creating tag ref: refs/tags/${tagName} ...`)
-    return client.git.createRef({
+    return client.rest.git.createRef({
       owner: ref.owner,
       repo: ref.repo,
       ref: 'refs/tags/' + tagName,
@@ -101,7 +103,7 @@ function createAnnotatedTag(client, tagName) {
     // Lastly, create github release.
     // This may no longer be strictly necessary - perhaps we can remove this step in the future.
     core.info(`Creating github release: ${tagName} ...`)
-    return client.repos.createRelease({
+    return client.rest.repos.createRelease({
       owner: ref.owner,
       repo: ref.repo,
       tag_name: tagName,
@@ -112,7 +114,7 @@ function createAnnotatedTag(client, tagName) {
 function createPRCommentOnce(client, message) {
   const ref = getPullRef();
 
-  return client.issues.listComments({
+  return client.rest.issues.listComments({
     owner: ref.owner,
     repo: ref.repo,
     issue_number: ref.pull_number,
@@ -120,7 +122,7 @@ function createPRCommentOnce(client, message) {
   }).then(res => {
     // only create the comment if it does not exist already
     if (res.data.filter(comment => comment.body === message).length === 0) {
-      return client.issues.createComment({
+      return client.rest.issues.createComment({
         owner: ref.owner,
         repo: ref.repo,
         issue_number: ref.pull_number,
@@ -142,7 +144,7 @@ async function getChangeTypeForContext(client) {
   }
 
   const pullRef = getPullRef();
-  const commits = await client.pulls.listCommits(pullRef);
+  const commits = await client.rest.pulls.listCommits(pullRef);
   for (let commit of commits.data.reverse()) {
     const tag = getChangeTypeForString(commit.commit.message);
     if (tag !== "") {
