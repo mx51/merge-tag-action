@@ -9,7 +9,7 @@ const PATCH_RE = /#patch|\[\s?patch\s?\]/gi
 const NOTAG_RE = /#notag|\[\s?notag\s?\]/gi
 
 async function run() {
-  const client = new github.GitHub(core.getInput('repo-token'));
+  const client = new github.getOctokit(core.getInput('repo-token'));
   const ref = getPullRef();
 
   const changeType = await getChangeTypeForContext(client);
